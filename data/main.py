@@ -2,15 +2,23 @@ from tkinter import *
 import dbConnect as db
 from tkinter import ttk
 from tkinter import messagebox
+import sys
+
+try:
+    PASSWD = sys.argv[1]
+except:
+    PASSWD = 'root'
 
 TABLE_STUDENTS = 'students'
 TABLE_BOOKS = 'books'
+
+COLOR = '#f6f6f6'
 
 BTN_FONT = ('arial',15,'bold')
 FONT_ENTRY = ('verdana',10,'bold')
 FONT_BIG = ('arial',15,'bold')
 FONT_SMALL = ('arial',12,'bold')
-FONT_REALLY_BIG = ('arial',18,'bold')
+FONT_REALLY_BIG = ('arial',19,'bold')
 
 
 
@@ -31,8 +39,6 @@ def show_books():
     
     entry_book.bind("<KeyRelease>", search_issued_books)
     entry_student.bind("<KeyRelease>", search_issued_books)
-    # btn_search = Button(show_window, text='Search', width=10, font=FONT_SMALL, command=search_issued_books)
-    # btn_search.grid(row=3, column=0, columnspan=2)
 
     lb_title.grid(row=0, column=0, columnspan=2, pady=15)
     lb_book_id.grid(row=1, column=0)
@@ -166,13 +172,11 @@ def return_book():
     lb_book_author_show = Label(return_window, text='Stephen King', font=FONT_SMALL)
     entry_book_id = Entry(return_window, textvariable=book_id, width=20, font=FONT_ENTRY)
     find_student = Button(return_window, text='Find student', font=FONT_SMALL, command=keypress_event)
-    # entry_book_id.bind("<KeyRelease>", keypress_event)
     
     lb_student_name_show = Label(return_window, text='Bruce Banner', font=FONT_SMALL)
     lb_student_class_show = Label(return_window, text='XII Science', font=FONT_SMALL)
     entry_student_id = Entry(return_window, textvariable=student_id, width=20, font=FONT_ENTRY)
     find_book = Button(return_window, text='Find book issued', font=FONT_SMALL, command=keypress_event)
-    # entry_student_id.bind("<KeyRelease>", keypress_event)
     on_return = lambda: return_book_in_db(return_window, entry_book_id)
     btn_return = Button(return_window, text='Return Book', width=25, font=BTN_FONT, command=on_return)
 
@@ -218,17 +222,15 @@ def fill_return_details(window, book_id, std_id, lb_book, lb_author, lb_name, lb
     lb_class.configure(text=row[5])
 
 def fill_non_specific_info(window):
-    # not specific
     lb_book_details = Label(window, text='Book Details', font=FONT_BIG)
     lb_book_id = Label(window, text='Book id', font=FONT_SMALL)
     lb_book_name = Label(window, text='Name: ', font=FONT_SMALL)
     lb_book_author = Label(window, text='Author: ', font=FONT_SMALL)
-    # not specific
     lb_student_details = Label(window, text='Student Details', font=FONT_BIG)
     lb_student_id = Label(window, text='Student id', font=FONT_SMALL)
     lb_student_name = Label(window, text='Name: ', font=FONT_SMALL)
     lb_student_class = Label(window, text='Class: ', font=FONT_SMALL)
-    # not specific
+
     lb_book_details.grid(row=0, column=0, pady=15, columnspan=2)
     lb_book_id.grid(row=1, column=0, pady=5, padx=40)
     lb_book_name.grid(row=2, column=0, pady=5)
@@ -249,14 +251,14 @@ def issue_book():
     
     fill_non_specific_info(issue_window)
 
-    lb_book_name_show = Label(issue_window, text='Harry Potter and\nthe half blood prince', font=FONT_SMALL)
-    lb_book_author_show = Label(issue_window, text='Stephen King', font=FONT_SMALL)
+    lb_book_name_show = Label(issue_window, text='', font=FONT_SMALL)
+    lb_book_author_show = Label(issue_window, text='', font=FONT_SMALL)
     entry_book_id = Entry(issue_window, textvariable=book_id, width=20, font=FONT_ENTRY)
     keypress_book = lambda e: findBook(TABLE_BOOKS, entry_book_id.get(), lb_book_name_show, lb_book_author_show)
     entry_book_id.bind("<KeyRelease>", keypress_book)
     
-    lb_student_name_show = Label(issue_window, text='Bruce Banner', font=FONT_SMALL)
-    lb_student_class_show = Label(issue_window, text='XII Science', font=FONT_SMALL)
+    lb_student_name_show = Label(issue_window, text='', font=FONT_SMALL)
+    lb_student_class_show = Label(issue_window, text='', font=FONT_SMALL)
     entry_student_id = Entry(issue_window, textvariable=student_id, width=20, font=FONT_ENTRY)
     keypress_student = lambda e: findBook(TABLE_STUDENTS, entry_student_id.get(), lb_student_name_show, lb_student_class_show)
     entry_student_id.bind("<KeyRelease>", keypress_student)
@@ -293,7 +295,47 @@ def issue_book_in_db(window, book_id, std_id):
         messagebox.showinfo(title='Success',
             message='The book has been issued successfully.')
         window.destroy()
-        
+
+def delete_book():
+    edit_window = Toplevel(root)
+    edit_window.title('Edit Book')
+    edit_window.geometry("360x290+500+220")
+    edit_window.resizable(False, False)
+
+    lb_title = Label(edit_window, text='Delete Book', font=FONT_BIG)
+    lb_id = Label(edit_window, text='Book Id:', font=FONT_SMALL)
+    lb_name = Label(edit_window, text='Name:', font=FONT_SMALL)
+    lb_author = Label(edit_window, text='Author:', font=FONT_SMALL)
+    
+    entry_id = Entry(edit_window, width=20, font=FONT_ENTRY)
+    entry_name = Label(edit_window, font=FONT_SMALL)
+    entry_author = Label(edit_window, font=FONT_SMALL)
+    
+    fill_details = lambda e: findBook(TABLE_BOOKS, entry_id.get().strip(), entry_name, entry_author)
+    entry_id.bind('<KeyRelease>', fill_details)
+    
+    delete = lambda: delete_from_db(edit_window, entry_id.get().strip())
+    btn_submit = Button(edit_window, text='Delete', width=25, font=BTN_FONT, command=delete)
+
+    lb_title.grid(row=0, column=0, columnspan=2, pady=10)
+    lb_id.grid(row=1, column=0, pady=10, padx=30)
+    entry_id.grid(row=1, column=1, pady=10, ipady=3, padx=20)
+    lb_name.grid(row=2, column=0, pady=10)
+    entry_name.grid(row=2, column=1, pady=10, ipady=3)
+    lb_author.grid(row=3, column=0, pady=10)
+    entry_author.grid(row=3, column=1, pady=10, ipady=3)
+
+    btn_submit.grid(row=5, column=0, columnspan=2, pady=30)
+
+def delete_from_db(window, book_id):
+    deleted = db.delete_book(book_id)
+    if deleted:
+        messagebox.showinfo(title='Success',
+                message='The book has been deleted.')
+    else:
+        messagebox.showerror(title='Error',
+                message='There was an error in deleting the book.')
+    window.destroy()
 
 def add_new_book():
     add_window = Toplevel(root)
@@ -332,7 +374,6 @@ def add_new_book_in_db(window, name, author, fiction):
     author = author.get().strip()
     fiction = fiction.get()
     fiction = 'fiction' if fiction else 'non fiction'
-    # print(name, author, fiction, 'asdd')
     if name and author:
         added = db.add_new_book(name, author, fiction)
         if added:
@@ -350,25 +391,30 @@ def add_new_book_in_db(window, name, author, fiction):
 
 root = Tk()
 root.title('Library Management System')
-root.geometry("480x450+400+200")
+root.geometry("600x330+400+200")
 root.resizable(False,False)
+root.configure(bg=COLOR)
 
-app_title = Label(root, text='Library Management System', font=FONT_REALLY_BIG)
+app_title = Label(root, text='Library Management\nSystem', bg=COLOR, font=FONT_REALLY_BIG)
 
-issue_btn = Button(root, text='Issue Book', font=BTN_FONT, width=30, command=issue_book)
-return_btn = Button(root, text='Return Book', font=BTN_FONT, width=30, command=return_book)
-search_btn = Button(root, text='Search Book', font=BTN_FONT, width=30, command=search_book)
-add_btn = Button(root, text='Add New Book', font=BTN_FONT, width=30, command=add_new_book)
-show_btn = Button(root, text='Show Issued Books', font=BTN_FONT, width=30, command=show_books)
+issue_btn = Button(root, text='Issue Book', font=BTN_FONT, width=20, bg=COLOR, command=issue_book)
+return_btn = Button(root, text='Return Book', font=BTN_FONT, width=20, bg=COLOR, command=return_book)
+search_btn = Button(root, text='Search for Books', font=BTN_FONT, width=20, bg=COLOR, command=search_book)
+add_btn = Button(root, text='Add New Book', font=BTN_FONT, width=20, bg=COLOR, command=add_new_book)
+edit_btn = Button(root, text='Delete Book', font=BTN_FONT, width=20, bg=COLOR, command=delete_book)
+show_btn = Button(root, text='Show Issued Books', font=BTN_FONT, width=20, bg=COLOR, command=show_books)
 
-app_title.pack(pady=20)
-issue_btn.pack(pady=10)
-return_btn.pack(pady=10)
-search_btn.pack(pady=10)
-add_btn.pack(pady=10)
-show_btn.pack(pady=10)
+app_title.grid(row=0, column=0, columnspan=2, pady=25)
+issue_btn.grid(row=1, column=0, pady=10, padx=25)
+return_btn.grid(row=2, column=0, pady=10, padx=25)
+show_btn.grid(row=3, column=0, pady=10, padx=25)
+search_btn.grid(row=1, column=1, pady=10, padx=25)
+add_btn.grid(row=2, column=1, pady=10, padx=25)
+edit_btn.grid(row=3, column=1, pady=10, padx=25)
 
-
-db.new_connection()
-root.mainloop()
-db.close_connection()
+try:
+    db.new_connection(passwd=PASSWD)
+    root.mainloop()
+    db.close_connection()
+except:
+    pass

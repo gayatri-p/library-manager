@@ -1,8 +1,10 @@
 import mysql.connector as sq
 import csv 
+import os
 
-PASSWD = 'alohomora'
-db = sq.connect(host='localhost', user='root', password=PASSWD)
+PATH = os.getcwd() + '\\'
+print(PATH)
+# db = sq.connect(host='localhost', user='root', password=PASSWD)
 
 def defineCursor(func):
     def wrapper(*args, **kwargs):
@@ -51,7 +53,7 @@ def add_data(cursor):
 
 def get_student_data():
     data = []
-    with open('sample_students.csv') as f:
+    with open(PATH+'sample_students.csv') as f:
         reader = csv.reader(f)
         for row in reader:
             row[0] = int(row[0])
@@ -60,14 +62,17 @@ def get_student_data():
 
 def get_books_data():
     data = []
-    with open('sample_books.csv') as f:
+    with open(PATH+'sample_books.csv') as f:
         reader = csv.reader(f)
         for row in reader:
             data.append(row)
     return data  
 
-@defineCursor
-def new_connection(cursor):
+# @defineCursor
+def new_connection(passwd):
+    global db
+    db = sq.connect(host='localhost', user='root', password=passwd)
+    cursor = db.cursor()
     cursor.execute('CREATE DATABASE IF NOT EXISTS library')
     cursor.execute('USE library')
     cursor.execute('SHOW TABLES LIKE \'books\'')
@@ -210,9 +215,19 @@ def fill_return_details(cursor, book_id, student_id):
         _ = cursor.fetchall() # clear buffer
     return row
 
+@defineCursor
+def delete_book(cursor, book_id):
+    q = f'DELETE FROM books WHERE book_id = {book_id}'
+    try:
+        cursor.execute(q)
+        db.commit()
+        return True
+    except:
+        return False
+        
 
 def close_connection():
     db.close()
 
-if __name__ == '__main__':
-    new_connection()
+# if __name__ == '__main__':
+#     new_connection()
