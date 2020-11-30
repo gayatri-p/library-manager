@@ -4,11 +4,6 @@ from tkinter import ttk
 from tkinter import messagebox
 import sys
 
-try:
-    PASSWD = sys.argv[1]
-except:
-    PASSWD = 'root'
-
 TABLE_STUDENTS = 'students'
 TABLE_BOOKS = 'books'
 
@@ -20,9 +15,8 @@ FONT_BIG = ('arial',15,'bold')
 FONT_SMALL = ('arial',12,'bold')
 FONT_REALLY_BIG = ('arial',19,'bold')
 
-
-
 def show_books():
+    '''Show issued books window'''
     show_window = Toplevel(root)
     show_window.title('All issued books')
     show_window.geometry("700x380+400+200")
@@ -85,6 +79,7 @@ def populate_issued_table(window, entry_book, entry_student):
     
 
 def search_book():
+    '''Search books window'''
     search_window = Toplevel(root)
     search_window.title('Search Books')
     search_window.geometry("740x500+400+200")
@@ -150,11 +145,13 @@ def populate_table(window, book_id, name, author):
         i += 1
     
 def findBook(table, key, label1, label2):
+    '''Fill info on KeyRelease'''
     col1, col2 = db.fill_labels(table=table, column_id=key)
     label1.configure(text=col1)
     label2.configure(text=col2)
 
 def return_book():
+    '''Return book window'''
     return_window = Toplevel(root)
     return_window.title('Return a Book')
     return_window.geometry("380x530+400+180")
@@ -222,6 +219,7 @@ def fill_return_details(window, book_id, std_id, lb_book, lb_author, lb_name, lb
     lb_class.configure(text=row[5])
 
 def fill_non_specific_info(window):
+    '''Fill the common fields in issue/return windows'''
     lb_book_details = Label(window, text='Book Details', font=FONT_BIG)
     lb_book_id = Label(window, text='Book id', font=FONT_SMALL)
     lb_book_name = Label(window, text='Name: ', font=FONT_SMALL)
@@ -241,6 +239,7 @@ def fill_non_specific_info(window):
     lb_student_class.grid(row=9, column=0, pady=5)
 
 def issue_book():
+    '''Issue book window'''
     issue_window = Toplevel(root)
     issue_window.title('Issue new Book')
     issue_window.geometry("380x450+400+220")
@@ -297,6 +296,7 @@ def issue_book_in_db(window, book_id, std_id):
         window.destroy()
 
 def delete_book():
+    '''Delete book window'''
     edit_window = Toplevel(root)
     edit_window.title('Edit Book')
     edit_window.geometry("360x290+500+220")
@@ -338,6 +338,7 @@ def delete_from_db(window, book_id):
     window.destroy()
 
 def add_new_book():
+    '''Add a new book window'''
     add_window = Toplevel(root)
     add_window.title('Add New Book')
     add_window.geometry("450x290+400+220")
@@ -389,6 +390,7 @@ def add_new_book_in_db(window, name, author, fiction):
                 message='Please enter the correct values.')
         window.lift(root)
 
+'''Home page'''
 root = Tk()
 root.title('Library Management System')
 root.geometry("600x330+400+200")
@@ -413,8 +415,10 @@ add_btn.grid(row=2, column=1, pady=10, padx=25)
 edit_btn.grid(row=3, column=1, pady=10, padx=25)
 
 try:
+    PASSWD = sys.argv[1]
     db.new_connection(passwd=PASSWD)
     root.mainloop()
     db.close_connection()
 except:
-    pass
+    messagebox.showwarning(title='Error',
+        message='Could not connect to the database.')
