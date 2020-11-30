@@ -3,10 +3,22 @@ import csv
 import os
 
 PATH = os.getcwd() + '\\'
-print(PATH)
-# db = sq.connect(host='localhost', user='root', password=PASSWD)
+
+def new_connection(passwd):
+    '''Establishes connection with MySQL database
+        And adds sample data if needed'''
+    global db
+    db = sq.connect(host='localhost', user='root', password=passwd)
+    cursor = db.cursor()
+    cursor.execute('CREATE DATABASE IF NOT EXISTS library')
+    cursor.execute('USE library')
+    cursor.execute('SHOW TABLES LIKE \'books\'')
+    result = cursor.fetchone()
+    if not result:
+        add_data()
 
 def defineCursor(func):
+    '''Decorator funtion to create and close cursor instances'''
     def wrapper(*args, **kwargs):
         cursor = db.cursor()
         result = func(cursor, *args, **kwargs)
@@ -20,6 +32,7 @@ def defineCursor(func):
 
 @defineCursor
 def add_data(cursor):
+    '''Adding sample data to the database'''
     q1 = '''create table if not exists books(
         book_id int primary key auto_increment,
         book varchar(60),
@@ -68,20 +81,9 @@ def get_books_data():
             data.append(row)
     return data  
 
-# @defineCursor
-def new_connection(passwd):
-    global db
-    db = sq.connect(host='localhost', user='root', password=passwd)
-    cursor = db.cursor()
-    cursor.execute('CREATE DATABASE IF NOT EXISTS library')
-    cursor.execute('USE library')
-    cursor.execute('SHOW TABLES LIKE \'books\'')
-    result = cursor.fetchone()
-    if not result:
-        add_data()
-
 @defineCursor
 def fill_labels(cursor, table, column_id):
+    '''Fill lables on KeyRelease functions'''
     if table == 'students':
         q = f'SELECT student_name, class FROM {table} WHERE student_id={column_id}'
     else:
@@ -104,9 +106,9 @@ def shorten_string(s):
 
 @defineCursor
 def add_new_book(cursor, name, author, fiction):
+    '''Add a new book to the database'''
     q = f'''INSERT INTO books(book, author, type)
         VALUES('{name}', '{author}', '{fiction}')'''
-    print(name, author, fiction)
     try:
         cursor.execute(q)
         db.commit()
@@ -116,6 +118,7 @@ def add_new_book(cursor, name, author, fiction):
 
 @defineCursor
 def get_issued_books(cursor, book_id, student_id):
+    '''Get the list of issued books along with issuer's info'''
     query = '''select book_id, book, student_id, student_name, class 
             from books, students
             where issued_by is not null and issued_by = student_id'''
@@ -139,6 +142,7 @@ def get_issued_books(cursor, book_id, student_id):
 
 @defineCursor
 def get_search(cursor, book_id, name, author):
+    '''Get results for searched books'''
     if book_id:
         query = f''' SELECT book_id, book, author, type, issued_by FROM books 
                     WHERE book LIKE '%{name}%' and author LIKE '%{author}%'
@@ -161,6 +165,7 @@ def get_search(cursor, book_id, name, author):
 
 @defineCursor
 def issue_book(cursor, book_id, student_id):
+    '''Issue a book'''
     cursor.execute(f'select issued_by from books where book_id = {book_id}')
     is_issued = cursor.fetchone()
     if is_issued[0]:
@@ -181,6 +186,7 @@ def issue_book(cursor, book_id, student_id):
     
 @defineCursor
 def return_book(cursor, book_id):
+    '''Return a book'''
     q = f'''UPDATE books SET issued_by=NULL
         WHERE book_id={book_id}'''
     try:
@@ -192,31 +198,32 @@ def return_book(cursor, book_id):
 
 @defineCursor
 def fill_return_details(cursor, book_id, student_id):
-    q = 'SELECT book_id, book, author, issued_by, student_name, class from books, students '
+    '''Fill return details if entered info is correct'''
+    q = ''
     if student_id and book_id:
-        q += f'''WHERE issued_by = student_id and student_id={student_id} 
+        q = f'''SELECT book_id, book, author, issued_by, student_name, class from books, students
+                WHERE issued_by = student_id and student_id={student_id} 
                 and book_id={book_id}'''
     elif student_id:
-        q += f'WHERE issued_by = student_id and issued_by={student_id}'
+        q = f'''SELECT book_id, book, author, issued_by, student_name, class from books, students
+                WHERE issued_by = student_id and issued_by={student_id}'''
     elif book_id:
-        q += f'WHERE issued_by = student_id and book_id={book_id}'
-    
+        q = f'''SELECT book_id, book, author, issued_by, student_name, class from books, students
+            WHERE issued_by = student_id and book_id={book_id}'''
+    else:
+        # no input
+        return ['' for _ in range(6)]
+
     try:
         cursor.execute(q)
         row = cursor.fetchone()
-        if cursor.rowcount != 1:
-            return False
+        return row
     except:
         return False
-        
-    if cursor.rowcount != 1:
-        return False
-    if cursor.rowcount > 1:
-        _ = cursor.fetchall() # clear buffer
-    return row
 
 @defineCursor
 def delete_book(cursor, book_id):
+    '''Delete a book from the database'''
     q = f'DELETE FROM books WHERE book_id = {book_id}'
     try:
         cursor.execute(q)
@@ -224,10 +231,6 @@ def delete_book(cursor, book_id):
         return True
     except:
         return False
-        
 
 def close_connection():
     db.close()
-
-# if __name__ == '__main__':
-#     new_connection()
