@@ -1,3 +1,20 @@
+def a():
+    
+    def b():
+        print('asd')
+
+    b()
+
+def c():
+
+    def b():
+        print(123)
+
+    b()
+
+a()
+c()
+
 # import csv
 # a = []
 # with open('s.csv', 'r', newline='', encoding='utf-8') as f:
