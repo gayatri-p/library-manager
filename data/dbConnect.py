@@ -129,11 +129,11 @@ def get_issued_books(cursor, book_id, member_id):
         AND books.book_id = issued.book_id'''
     
     if book_id and member_id:
-        query += f' and book_id = {book_id} and member_id={member_id}'
+        query += f' and issued.book_id = {book_id} and issued.member_id={member_id}'
     elif book_id:
-        query += f' and book_id = {book_id}'
+        query += f' and issued.book_id = {book_id}'
     elif member_id:
-        query += f' and member_id={member_id}'
+        query += f' and issued.member_id={member_id}'
 
     query += ' ORDER BY date_of_issue'
 
@@ -231,8 +231,9 @@ def fill_return_details(cursor, book_id, member_id):
 
     try:
         cursor.execute(query)
-        row = cursor.fetchone()
-        print(row)
+        row = list(cursor.fetchone())
+        if row and len(row[1]) > 18:
+            row[1] = shorten_string(row[1])
         return row
     except:
         return False
