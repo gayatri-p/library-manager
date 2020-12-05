@@ -1,12 +1,20 @@
 # Library Management App
 
-A Library Management app made in python using tkinter and MySQL database.
+A *GUI* Library Management app made in python using tkinter and MySQL database.
 
 ### Features
 
-- Issue a book
-- Return a book
-- Show issued books
-- Search for books
-- Add a new book
-- Delete a book
+- **Issue & Return Books**
+    - Issue book
+    - Return book
+    - Show issued books
+    
+- **Manage Books**
+    - Add new book
+    - Update or Delete book
+    - Search through books
+    
+- **Manage Members**
+    - Add new member
+    - Update or Delete members
+    - Search through members

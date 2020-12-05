@@ -3,8 +3,7 @@ import csv
 import os
 from datetime import datetime
 
-# CHANGE THIS!!!!!!!!!!
-PATH = os.getcwd() + '\\data\\'
+PATH = os.getcwd() + '\\'
 now = datetime.now()
 DATE = now.strftime('%Y-%m-%d')
 

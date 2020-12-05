@@ -16,7 +16,6 @@ FONT_SMALL = ('arial',12,'bold')
 FONT_REALLY_BIG = ('arial',19,'bold')
 
 def insert_into_entry(entry, val):
-    # for key, val in items.items():
     entry.delete(0, END)
     entry.insert(0, val)
 
@@ -577,7 +576,7 @@ edit_member_btn.grid(row=4, column=2, pady=10, padx=25)
 # 587 lines 23.7 KB (24,354 bytes)
 
 try:
-    PASSWD = 'alohomora'#sys.argv[1]
+    PASSWD = sys.argv[1]
     db.new_connection(passwd=PASSWD)
     root.mainloop()
     db.close_connection()
