@@ -6,13 +6,23 @@ COLOR = '#f6f6f6'
 FONT_ENTRY = ('verdana',10,'bold')
 FONT_SMALL = ('arial',12,'bold')
 
-class MyButton(Button):
+class HomeButton(Button):
     def __init__(self, parent, **options):
-        Button.__init__(self, parent, options, font=BTN_FONT, width=20, bg=COLOR)
+        Button.__init__(self, parent, options, relief=GROOVE, font=BTN_FONT, width=20, bg=COLOR)
+
+    def set_grid(self, **kwargs):
+        self.grid(kwargs, pady=10, padx=25)
 
 class MyEntry(Entry):
     def __init__(self, parent, **options):
         Entry.__init__(self, parent, options, font=FONT_ENTRY)
+    
+    def val(self):
+        return self.get().strip()
+    
+    def set_val(self, val):
+        self.delete(0, END)
+        self.insert(0, val)
 
 class MyLabel(Label):
     def __init__(self, parent, **options):

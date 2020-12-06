@@ -2,6 +2,7 @@ import mysql.connector as sq
 import csv 
 import os
 from datetime import datetime
+from mysql.connector.errors import IntegrityError
 
 PATH = os.getcwd() + '\\'
 now = datetime.now()
@@ -42,7 +43,6 @@ def add_data(cursor):
         author varchar(60),
         genre varchar(15)
     )''')
-    # cursor.execute(q)
     cursor.execute('''create table if not exists members(
         member_id int primary key auto_increment,
         name varchar(25),
@@ -50,14 +50,14 @@ def add_data(cursor):
         join_date date
     )''')
     cursor.execute('''create table if not exists issued(
-        book_id int,
+        book_id int UNIQUE,
         member_id int,
         date_of_issue date
     )''')
     
-    books_data = get_sample_data(PATH+'sample_books.csv')
-    members_data = get_sample_data(PATH+'sample_members.csv')
-    issued_data = get_sample_data(PATH+'sample_issued.csv')
+    books_data = get_sample_data('sample_books.csv')
+    members_data = get_sample_data('sample_members.csv')
+    issued_data = get_sample_data('sample_issued.csv')
 
     try:
         for row in books_data:
@@ -77,31 +77,13 @@ def add_data(cursor):
 
     db.commit()
 
-def get_sample_data(path):
+def get_sample_data(file):
     data = []
-    with open(path) as f:
+    with open(PATH+file) as f:
         reader = csv.reader(f)
         for row in reader:
             data.append(row)
     return data  
-
-@defineCursor
-def fill_labels(cursor, table, column_id):
-    '''Fill lables on KeyRelease functions'''
-    if table == 'members':
-        q = f'SELECT name, class FROM {table} WHERE member_id={column_id}'
-    else:
-        q = f'SELECT book, author FROM {table} WHERE book_id={column_id}'
-
-    cursor.execute(q)
-    row = cursor.fetchone()
-    if cursor.rowcount == 1:
-        col1, col2 = row
-    else:
-        col1 = col2 = ''
-    if len(col1) > 18:
-        col1 = shorten_string(col1)
-    return col1, col2
 
 def shorten_string(s):
     i = s.find(' ', 18, -1)
@@ -113,6 +95,18 @@ def add_new_book(cursor, name, author, genre):
     '''Add a new book to the database'''
     q = f'''INSERT INTO books(book, author, genre)
         VALUES("{name}", '{author}', '{genre}')'''
+    try:
+        cursor.execute(q)
+        db.commit()
+        return True
+    except:
+        return False
+
+@defineCursor
+def add_new_member(cursor, name, clss):
+    q = f'''INSERT INTO members(name, class, join_date)
+        VALUES('{name}', '{clss}', '{DATE}')'''
+    
     try:
         cursor.execute(q)
         db.commit()
@@ -184,31 +178,22 @@ def get_search(cursor, book_id, name, author):
         return []
 
 @defineCursor
-def issue_book(cursor, book_id, member_id):
-    '''Issue a book'''
-    cursor.execute(f'SELECT * FROM issued WHERE book_id = {book_id}')
-    is_issued = cursor.fetchone()
-    if is_issued:
-        return 'is issued'
+def fill_issue_details(cursor, table, column_id):
+    '''Fill lables on KeyRelease functions'''
+    if table == 'members':
+        q = f'SELECT name, class FROM {table} WHERE member_id={column_id}'
+    else:
+        q = f'SELECT book, author FROM {table} WHERE book_id={column_id}'
 
-    q = f"INSERT INTO issued VALUES({book_id},{member_id},'{DATE}')"
-    try:
-        cursor.execute(q)
-        db.commit()
-        return True
-    except:
-        return False
-    
-@defineCursor
-def return_book(cursor, book_id):
-    '''Return a book'''
-    q = f'''DELETE FROM issued WHERE book_id = {book_id}'''
-    try:
-        cursor.execute(q)
-        db.commit()
-        return True
-    except:
-        return False
+    cursor.execute(q)
+    row = cursor.fetchone()
+    if cursor.rowcount == 1:
+        col1, col2 = row
+    else:
+        col1 = col2 = ''
+    if len(col1) > 18:
+        col1 = shorten_string(col1)
+    return col1, col2
 
 @defineCursor
 def fill_return_details(cursor, book_id, member_id):
@@ -238,10 +223,22 @@ def fill_return_details(cursor, book_id, member_id):
         return False
 
 @defineCursor
-def add_new_member(cursor, name, clss):
-    q = f'''INSERT INTO members(name, class, join_date)
-        VALUES('{name}', '{clss}', '{DATE}')'''
+def issue_book(cursor, book_id, member_id):
+    '''Issue a book'''
+    q = f"INSERT INTO issued VALUES({book_id},{member_id},'{DATE}')"
+    try:
+        cursor.execute(q)
+        db.commit()
+        return True
+    except IntegrityError:
+        return 'is issued'
+    except:
+        return False
     
+@defineCursor
+def return_book(cursor, book_id):
+    '''Return a book'''
+    q = f'''DELETE FROM issued WHERE book_id = {book_id}'''
     try:
         cursor.execute(q)
         db.commit()
@@ -250,7 +247,7 @@ def add_new_member(cursor, name, clss):
         return False
 
 @defineCursor
-def update_member(cursor, table, _id, col1, col2, col3):
+def update_column(cursor, table, _id, col1, col2, col3):
     if table == 'books':
         q = f'''UPDATE books
             SET book = '{col1}', author='{col2}', genre='{col3}'
@@ -267,7 +264,7 @@ def update_member(cursor, table, _id, col1, col2, col3):
         return False
 
 @defineCursor
-def fill_member_details(cursor, table, _id):
+def fill_column_details(cursor, table, _id):
     if table == 'members':
         q = f'''SELECT name, class, join_date FROM members
             WHERE member_id = {_id}'''
@@ -286,7 +283,7 @@ def fill_member_details(cursor, table, _id):
     return ['' for _ in range(3)]
 
 @defineCursor
-def delete_entry(cursor, table, _id):
+def delete_column(cursor, table, _id):
     '''Delete a row from the database'''
     col = 'book_id' if table == 'books' else 'member_id'
     q = f'DELETE FROM {table} WHERE {col} = {_id}'
@@ -299,6 +296,3 @@ def delete_entry(cursor, table, _id):
 
 def close_connection():
     db.close()
-
-if __name__ == '__main__':
-    new_connection('alohomora')

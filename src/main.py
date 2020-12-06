@@ -9,15 +9,11 @@ TABLE_MEMBERS = 'members'
 TABLE_BOOKS = 'books'
 GENRES = ['Fiction', 'Non-Fiction', 'Biography', 'Course Book']
 COLOR = '#f6f6f6'
-CLR_GRAY = '#999'
+CLR_GRAY = '#5d5d66'
 BTN_FONT = ('arial',15,'bold')
 FONT_BIG = ('arial',15,'bold')
 FONT_SMALL = ('arial',12,'bold')
 FONT_REALLY_BIG = ('arial',19,'bold')
-
-def insert_into_entry(entry, val):
-    entry.delete(0, END)
-    entry.insert(0, val)
 
 def show_issued_books():
     '''Show issued books window'''
@@ -50,7 +46,7 @@ def show_issued_books():
         tree = MyTree(show_window, row=4, column=0, columnspan=2, padx=20, pady=15)
         tree.set_columns(columns=cols, headings=col_names, widths=widths)
         
-        data = db.get_issued_books(entry_book.get().strip(), entry_student.get().strip())
+        data = db.get_issued_books(entry_book.val(), entry_student.val())
         tree.insert_data(data)
     
     populate_table()
@@ -63,12 +59,11 @@ def search_books():
     search_window.resizable(False, False)
 
     entry_name = MyEntry(search_window, width=28)
-    entry_author = MyEntry(search_window, width=25)
+    entry_author = MyEntry(search_window, width=22)
     entry_id = MyEntry(search_window, width=6)
 
-    empty_text_box = Label(search_window, text='Enter search queries\n\nOr just press Search\nto show all books.',
-                            font=FONT_BIG, fg=CLR_GRAY)
-    empty_text_box.grid(row=5, column=0, columnspan=5, pady=40)
+    lb_length = Label(search_window, font=FONT_SMALL, fg=CLR_GRAY)
+    lb_length.grid(row=5, column=0)
 
     btn_search = Button(search_window, text='Search', width=10, font=FONT_BIG, 
         command=lambda: populate_table())
@@ -86,10 +81,10 @@ def search_books():
     entry_author.grid(row=2, column=3, columnspan=2, ipady=2, padx=30, pady=2)
 
     def populate_table():
-        book_id = entry_id.get().strip()
-        name = entry_name.get().strip()
-        author = entry_author.get().strip()
-        tree = MyTree(search_window, row=5, column=0, columnspan=5, padx=20, pady=15)
+        book_id = entry_id.val()
+        name = entry_name.val()
+        author = entry_author.val()
+        tree = MyTree(search_window, row=4, column=0, columnspan=4, padx=20, pady=15)
         
         cols = ['id', 'name', 'author', 'fiction', 'issued']
         col_names = ['Id', 'Name', 'Author', 'Type', 'Is issued']
@@ -97,7 +92,23 @@ def search_books():
         tree.set_columns(columns=cols, headings=col_names, widths=widths)
         
         data = db.get_search(book_id, name, author)
+        lb_length.configure(text=f'{len(data)} results')
         tree.insert_data(data)
+
+    populate_table()
+
+def fill_non_specific_info(window):
+    '''Fill the common fields in issue/return windows'''
+    Label(window, text='Book Details', font=FONT_BIG).grid(
+        row=0, column=0, pady=15, columnspan=2)
+    MyLabel(window, text='Book id').grid(row=1, column=0, pady=5, padx=40)
+    MyLabel(window, text='Name: ').grid(row=2, column=0, pady=5)
+    MyLabel(window, text='Author: ').grid(row=3, column=0, pady=5)
+    Label(window, text='Student Details', font=FONT_BIG).grid(
+        row=5, column=0, pady=15, columnspan=2)
+    MyLabel(window, text='Student id').grid(row=6, column=0, pady=5)
+    MyLabel(window, text='Name: ').grid(row=8, column=0, pady=5)
+    MyLabel(window, text='Class: ').grid(row=9, column=0, pady=5)
 
 def return_book():
     '''Return book window'''
@@ -136,7 +147,7 @@ def return_book():
     btn_return.grid(row=11, column=0, columnspan=2, padx=30, pady=25)
 
     def return_book_in_db():
-        returned = db.return_book(entry_book_id.get().strip())
+        returned = db.return_book(entry_book_id.val())
         if returned:
             messagebox.showinfo(title='Success',
                 message='The book has been returned.')
@@ -148,34 +159,21 @@ def return_book():
 
     def fill_return_details():
         row = db.fill_return_details(
-            entry_book_id.get().strip(), entry_member_id.get().strip())
+            entry_book_id.val(), entry_member_id.val())
 
         # row form: [book_id, book, author, issued_by, student_name, class]
         if not row:
+            msg='Either the entered book is not issued\nOr the given member has not\nissued any books currently'
             row = ['' for _ in range(6)]
-            messagebox.showwarning(title='Error', 
-                    message='Either the entered book is not issued\nOr the given member has not\nissued any books currently')
+            messagebox.showwarning(title='Error', message=msg)
             return_window.lift(root)
 
-        insert_into_entry(entry_book_id, row[0])
-        insert_into_entry(entry_member_id, row[3])
+        entry_book_id.set_val(row[0])
+        entry_member_id.set_val(row[3])
         lb_book_name.configure(text=row[1])
         lb_author.configure(text=row[2])
         lb_member_name.configure(text=row[4])
         lb_member_class.configure(text=row[5])
-
-def fill_non_specific_info(window):
-    '''Fill the common fields in issue/return windows'''
-    Label(window, text='Book Details', font=FONT_BIG).grid(
-        row=0, column=0, pady=15, columnspan=2)
-    MyLabel(window, text='Book id').grid(row=1, column=0, pady=5, padx=40)
-    MyLabel(window, text='Name: ').grid(row=2, column=0, pady=5)
-    MyLabel(window, text='Author: ').grid(row=3, column=0, pady=5)
-    Label(window, text='Student Details', font=FONT_BIG).grid(
-        row=5, column=0, pady=15, columnspan=2)
-    MyLabel(window, text='Student id').grid(row=6, column=0, pady=5)
-    MyLabel(window, text='Name: ').grid(row=8, column=0, pady=5)
-    MyLabel(window, text='Class: ').grid(row=9, column=0, pady=5)
 
 def issue_book():
     '''Issue book window'''
@@ -184,45 +182,42 @@ def issue_book():
     issue_window.geometry("380x450+400+220")
     issue_window.resizable(False, False)
     
-    book_id = StringVar()
-    student_id = StringVar()
-    
     fill_non_specific_info(issue_window)
 
-    lb_book_name_show = MyLabel(issue_window)
-    lb_book_author_show = MyLabel(issue_window)
+    lb_book = MyLabel(issue_window)
+    lb_author = MyLabel(issue_window)
+    lb_member = MyLabel(issue_window)
+    lb_class = MyLabel(issue_window)
+
     entry_book_id = MyEntry(issue_window, width=20)
-    keypress_book = lambda e: fill_details(TABLE_BOOKS, entry_book_id.get(), lb_book_name_show, lb_book_author_show)
-    entry_book_id.bind("<KeyRelease>", keypress_book)
+    entry_member_id = MyEntry(issue_window, width=20)
     
-    lb_student_name_show = MyLabel(issue_window)
-    lb_student_class_show = MyLabel(issue_window)
-    entry_student_id = MyEntry(issue_window, width=20)
-    keypress_student = lambda e: fill_details(TABLE_MEMBERS, entry_student_id.get(), lb_student_name_show, lb_student_class_show)
-    entry_student_id.bind("<KeyRelease>", keypress_student)
+    entry_book_id.bind("<KeyRelease>", 
+        lambda e: fill_details(TABLE_BOOKS, e, lb_book, lb_author))
+    entry_member_id.bind("<KeyRelease>", 
+        lambda e: fill_details(TABLE_MEMBERS, e, lb_member, lb_class))
     
     btn_issue = Button(issue_window, text='Issue Book', width=25, font=BTN_FONT, 
         command=lambda: issue_book_in_db())
 
     entry_book_id.grid(row=1, column=1, pady=5,sticky=W, ipady=2)
-    lb_book_name_show.grid(row=2, column=1, pady=5)
-    lb_book_author_show.grid(row=3, column=1, pady=5)
-    entry_student_id.grid(row=6, column=1, pady=5,sticky=W, ipady=2)
-    lb_student_name_show.grid(row=8, column=1, pady=5)
-    lb_student_class_show.grid(row=9, column=1, pady=5)
+    lb_book.grid(row=2, column=1, pady=5)
+    lb_author.grid(row=3, column=1, pady=5)
+    entry_member_id.grid(row=6, column=1, pady=5,sticky=W, ipady=2)
+    lb_member.grid(row=8, column=1, pady=5)
+    lb_class.grid(row=9, column=1, pady=5)
     btn_issue.grid(row=11, column=0, columnspan=2, padx=30, pady=25)
 
-    def fill_details(table, key, label1, label2):
-        '''Fill info on KeyRelease'''
-        col1, col2 = db.fill_labels(table=table, column_id=key)
+    def fill_details(table, e, label1, label2):
+        col1, col2 = db.fill_issue_details(table, e.widget.val())
         label1.configure(text=col1)
         label2.configure(text=col2)
 
     def issue_book_in_db():
-        book_id = entry_book_id.get().strip()
-        std_id = entry_student_id.get().strip()
+        book_id = entry_book_id.val()
+        mem_id = entry_member_id.val()
 
-        issued = db.issue_book(book_id, std_id)
+        issued = db.issue_book(book_id, mem_id)
         if issued == 'is issued':
             messagebox.showwarning(title='Error',
                 message='The book is already issued by someone')
@@ -254,15 +249,13 @@ def edit_book():
     
     entry_id.bind('<KeyRelease>', lambda e:fill_details())
     
-    delete = lambda: delete_from_db(edit_window, entry_id.get().strip())
-    
     btn_fr = Frame(edit_window)
     btn_fr.grid(row=5, column=0, columnspan=2, pady=20)
     btn_update = Button(btn_fr, text='Update', width=12, font=BTN_FONT, 
         command=lambda: update_book())
     btn_delete = Button(btn_fr, text='Delete', width=12, font=BTN_FONT, 
-        command=delete)
-    btn_update.grid(row=0, column=0, padx=5)
+        command=lambda: delete_book())
+    btn_update.grid(row=0, column=0, padx=20)
     btn_delete.grid(row=0, column=1)
 
     drp_genre.grid(row=4, column=1)
@@ -278,20 +271,20 @@ def edit_book():
     MyLabel(edit_window, text='Genre:').grid(row=4, column=0, pady=10)
 
     def fill_details():
-        book_id = entry_id.get()
-        name, author, genre = db.fill_member_details(TABLE_BOOKS, book_id)
-        insert_into_entry(entry_name, name)
-        insert_into_entry(entry_author, author)
+        book_id = entry_id.val()
+        name, author, genre = db.fill_column_details(TABLE_BOOKS, book_id)
+        entry_name.set_val(name)
+        entry_author.set_val(author)
         var_genre.set(genre)
 
     def update_book():
-        book_id = entry_id.get()
-        name = entry_name.get().strip()
-        author = entry_author.get().strip()
+        book_id = entry_id.val()
+        name = entry_name.val()
+        author = entry_author.val()
         genre = var_genre.get()
 
         if book_id and name and author:
-            updated = db.update_member(TABLE_BOOKS, book_id, name, author, genre)
+            updated = db.update_column(TABLE_BOOKS, book_id, name, author, genre)
             if updated:
                 messagebox.showinfo(title='Success',
                     message='Book details have been Updated.')
@@ -303,8 +296,8 @@ def edit_book():
         edit_window.lift(root)
 
     def delete_book():
-        book_id = entry_id.get()
-        deleted = db.delete_entry(TABLE_BOOKS, book_id)
+        book_id = entry_id.val()
+        deleted = db.delete_column(TABLE_BOOKS, book_id)
         if deleted:
             messagebox.showinfo(title='Success',
                 message='The Book has been deleted.')
@@ -318,7 +311,7 @@ def add_new_book():
     '''Add a new book window'''
     add_window = Toplevel(root)
     add_window.title('Add New Book')
-    add_window.geometry("450x290+400+220")
+    add_window.geometry("400x290+400+220")
     add_window.resizable(False, False)
 
     genre = StringVar(add_window)
@@ -327,7 +320,7 @@ def add_new_book():
     lb_title = Label(add_window, text='Add New Book', font=FONT_BIG)
     lb_name = MyLabel(add_window, text='Name:')
     lb_author = MyLabel(add_window, text='Author:')
-    lb_fiction = MyLabel(add_window, text='Genre:')
+    lb_genre = MyLabel(add_window, text='Genre:')
     
     entry_name = MyEntry(add_window, width=30)
     entry_author = MyEntry(add_window, width=30)
@@ -342,14 +335,14 @@ def add_new_book():
     entry_name.grid(row=1, column=1, pady=10, ipady=3, columnspan=2)
     lb_author.grid(row=2, column=0, pady=10)
     entry_author.grid(row=2, column=1, pady=10, ipady=3, columnspan=2)
-    lb_fiction.grid(row=3, column=0, padx=25, pady=10)
+    lb_genre.grid(row=3, column=0, padx=15, pady=10)
     drp_genre.grid(row=3, column=1)
 
-    btn_submit.grid(row=4, column=0, columnspan=3, pady=30)
+    btn_submit.grid(row=4, column=0, columnspan=3, padx=30, pady=30)
 
     def add_to_db():
-        name = entry_name.get().strip()
-        author = entry_author.get().strip()
+        name = entry_name.val()
+        author = entry_author.val()
         sel_genre = genre.get()
         if name and author:
             added = db.add_new_book(name, author, sel_genre)
@@ -382,7 +375,7 @@ def add_member():
     entry_section.grid(row=3, column=1, ipady=3)
 
     btn_submit = Button(add_mem_window, text='Submit', width=25, font=BTN_FONT,
-         command=lambda: add_new_member_in_db())
+         command=lambda: add_to_db())
 
     btn_submit.grid(row=4, column=0, columnspan=2, padx=25, pady=20)
     Label(add_mem_window, text='Add New Member', font=FONT_BIG).grid(
@@ -394,9 +387,9 @@ def add_member():
     MyLabel(add_mem_window, text='Section: ').grid(
         row=3, column=0, pady=10)
 
-    def add_new_member_in_db():
-        name = entry_name.get().strip()
-        clss = entry_class.get().strip() + ' ' + entry_section.get().strip().upper()
+    def add_to_db():
+        name = entry_name.val()
+        clss = entry_class.val() + ' ' + entry_section.val().upper()
         
         inserted = db.add_new_member(name, clss)
         if inserted:
@@ -450,23 +443,23 @@ def edit_member():
         row=5, column=0, pady=10)
 
     def fill_details():
-        mem_id = entry_id.get()
-        name, clss, date = db.fill_member_details(TABLE_MEMBERS, mem_id)
+        mem_id = entry_id.val()
+        name, clss, date = db.fill_column_details(TABLE_MEMBERS, mem_id)
 
         clss = clss.split(maxsplit=1) if clss else ['','']
-        insert_into_entry(entry_name, name)
-        insert_into_entry(entry_class, clss[0])
-        insert_into_entry(entry_section, clss[-1])
-        insert_into_entry(entry_date, date)
+        entry_name.set_val(name)
+        entry_class.set_val(clss[0])
+        entry_section.set_val(clss[-1])
+        entry_date.set_val(date)
 
     def update_member():
-        mem_id = entry_id.get()
-        name = entry_name.get().strip()
-        clss = entry_class.get().strip() + ' ' + entry_section.get().strip()
-        date = entry_date.get().strip()
+        mem_id = entry_id.val()
+        name = entry_name.val()
+        clss = entry_class.val() + ' ' + entry_section.val()
+        date = entry_date.val()
         
         if mem_id and name and clss and date:
-            updated = db.update_member(TABLE_MEMBERS, mem_id, name, clss, date)
+            updated = db.update_column(TABLE_MEMBERS, mem_id, name, clss, date)
             if updated:
                 messagebox.showinfo(title='Success',
                     message='Member details have been Updated.')
@@ -481,8 +474,8 @@ def edit_member():
             edit_mem_window.lift(root)
 
     def delete_member():
-        mem_id = entry_id.get()
-        deleted = db.delete_entry(TABLE_MEMBERS, mem_id)
+        mem_id = entry_id.val()
+        deleted = db.delete_column(TABLE_MEMBERS, mem_id)
         if deleted:
             messagebox.showinfo(title='Success',
                 message='Member details have been deleted.')
@@ -521,9 +514,9 @@ def show_members():
     entry_class.bind('<KeyRelease>', event_click)
 
     def populate_table():
-        mem_id = entry_id.get().strip()
-        name = entry_name.get().strip()
-        clss = entry_class.get().strip()
+        mem_id = entry_id.val()
+        name = entry_name.val()
+        clss = entry_class.val()
 
         cols = ['member_id', 'name', 'class', 'date']
         col_names = ['Member Id', 'Name', 'Class', 'Join Date']
@@ -546,34 +539,30 @@ root.configure(bg=COLOR)
 
 app_title = Label(root, text='Library Management\nSystem', bg=COLOR, font=FONT_REALLY_BIG)
 
-issue_btn = MyButton(root, text='Issue Book', command=issue_book)
-return_btn = MyButton(root, text='Return Book', command=return_book)
-show_btn = MyButton(root, text='Show Issued Books', command=show_issued_books)
-search_btn = MyButton(root, text='Search for Books', command=search_books)
-add_btn = MyButton(root, text='Add New Book', command=add_new_book)
-edit_btn = MyButton(root, text='Update/Delete Book', command=edit_book)
-show_members_btn = MyButton(root, text='Show All Members', command=show_members)
-add_member_btn = MyButton(root, text='Add a Member', command=add_member)
-edit_member_btn = MyButton(root, text='Update/Delete Member', command=edit_member)
+issue_btn = HomeButton(root, text='Issue Book', command=issue_book)
+return_btn = HomeButton(root, text='Return Book', command=return_book)
+show_btn = HomeButton(root, text='Show Issued Books', command=show_issued_books)
+search_btn = HomeButton(root, text='Search for Books', command=search_books)
+add_btn = HomeButton(root, text='Add New Book', command=add_new_book)
+edit_btn = HomeButton(root, text='Update/Delete Book', command=edit_book)
+show_members_btn = HomeButton(root, text='Show All Members', command=show_members)
+add_member_btn = HomeButton(root, text='Add a Member', command=add_member)
+edit_member_btn = HomeButton(root, text='Update/Delete Member', command=edit_member)
 
 Label(root, text='Issue & Return\nBooks', font=FONT_BIG, bg=COLOR, fg=CLR_GRAY).grid(row=1, column=1)
 Label(root, text='Manage\nBooks', font=FONT_BIG, bg=COLOR, fg=CLR_GRAY).grid(row=1, column=0)
 Label(root, text='Manage\nMembers', font=FONT_BIG, bg=COLOR, fg=CLR_GRAY).grid(row=1, column=2)
 
 app_title.grid(row=0, column=1, columnspan=1, pady=25)
-issue_btn.grid(row=2, column=1, pady=10, padx=25)
-return_btn.grid(row=3, column=1, pady=10, padx=25)
-show_btn.grid(row=4, column=1, pady=10, padx=25)
-search_btn.grid(row=2, column=0, pady=10, padx=25)
-add_btn.grid(row=3, column=0, pady=10, padx=25)
-edit_btn.grid(row=4, column=0, pady=10, padx=25)
-show_members_btn.grid(row=2, column=2, pady=10, padx=25)
-add_member_btn.grid(row=3, column=2, pady=10, padx=25)
-edit_member_btn.grid(row=4, column=2, pady=10, padx=25)
-
-# TODO
-# 661 lines 26.5 KB (27,160 bytes)
-# 587 lines 23.7 KB (24,354 bytes)
+issue_btn.set_grid(row=2, column=1)
+return_btn.set_grid(row=3, column=1)
+show_btn.set_grid(row=4, column=1)
+search_btn.set_grid(row=2, column=0)
+add_btn.set_grid(row=3, column=0)
+edit_btn.set_grid(row=4, column=0)
+show_members_btn.set_grid(row=2, column=2)
+add_member_btn.set_grid(row=3, column=2)
+edit_member_btn.set_grid(row=4, column=2)
 
 try:
     PASSWD = sys.argv[1]

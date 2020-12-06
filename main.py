@@ -8,7 +8,7 @@ def login(e):
     try:
         db = sq.connect(host='localhost', user='root', password=passwd)
         root.destroy()
-        os.chdir('data')
+        os.chdir('src')
         os.system(f'python main.py {passwd}')
     except:
         messagebox.showinfo(title='Access Denied', message='The password is incorrect.')
