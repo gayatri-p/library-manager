@@ -4,7 +4,7 @@ import os
 from datetime import datetime
 from mysql.connector.errors import IntegrityError
 
-PATH = os.getcwd() + '\\'
+PATH = os.getcwd() + '\\..\\examples\\'
 now = datetime.now()
 DATE = now.strftime('%Y-%m-%d')
 
@@ -272,7 +272,6 @@ def fill_column_details(cursor, table, _id):
         q = f'''SELECT book, author, genre FROM books
             WHERE book_id = {_id}'''
 
-    # row = 
     try:
         cursor.execute(q)
         row = cursor.fetchone()
