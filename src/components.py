@@ -1,10 +1,14 @@
 from tkinter import *
 from tkinter import ttk
 
-BTN_FONT = ('arial',15,'bold')
 COLOR = '#f6f6f6'
+CLR_GRAY = '#5d5d66'
+
 FONT_ENTRY = ('verdana',10,'bold')
+BTN_FONT = ('arial',15,'bold')
+FONT_BIG = ('arial',15,'bold')
 FONT_SMALL = ('arial',12,'bold')
+FONT_REALLY_BIG = ('arial',19,'bold')
 
 class HomeButton(Button):
     def __init__(self, parent, **options):

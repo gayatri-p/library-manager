@@ -1,6 +1,6 @@
 # Library Management App
 
-A *GUI* Library Management app made in python using tkinter and MySQL database.
+A *GUI* Library Management application made in python using tkinter and MySQL database.
 
 ### Features
 

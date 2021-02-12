@@ -5,13 +5,13 @@ import mysql.connector as sq
 
 def login(e):
     passwd = entry.get().strip()
-    # try:
-    db = sq.connect(host='localhost', user='root', password=passwd)
-    root.destroy()
-    os.chdir('src')
-    os.system(f'python main.py {passwd}')
-    # except:
-    # messagebox.showinfo(title='Access Denied', message='The password is incorrect.')
+    try:
+        db = sq.connect(host='localhost', user='root', password=passwd)
+        root.destroy()
+        os.chdir('src')
+        os.system(f'python app.py {passwd}')
+    except:
+        messagebox.showinfo(title='Access Denied', message='The password is incorrect.')
 
 FONT_BIG = ('arial',14,'bold')
 FONT_SMALL = ('arial',12,'bold')

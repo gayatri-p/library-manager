@@ -180,6 +180,8 @@ def get_search(cursor, book_id, name, author):
 @defineCursor
 def fill_issue_details(cursor, table, column_id):
     '''Fill lables on KeyRelease functions'''
+    if not column_id:
+        return 
     if table == 'members':
         q = f'SELECT name, class FROM {table} WHERE member_id={column_id}'
     else:
